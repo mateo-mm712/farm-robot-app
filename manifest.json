@@ -1,10 +1,10 @@
 {
   "services": {
-    "TEMPLATE_NAME": {
-      "name": "TEMPLATE_NAME",
+    "farm-robot-app": {
+      "name": "farm-robot-app",
       "type": "app",
-      "exec_cmd": "/mnt/managed_home/farm-ng-user-YOUR_USER_HERE/YOUR-REPOSITORY-NAME/entry.sh",
-      "display_name": "APP NAME",
+      "exec_cmd": "/mnt/managed_home/farm-ng-user-mateomm2004/farm-robot-app/entry.sh",
+      "display_name": "Farm Data App",
       "autostart": false
     }
   }
