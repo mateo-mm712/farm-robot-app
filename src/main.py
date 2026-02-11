@@ -63,8 +63,6 @@ class TemplateApp(App):
     def __init__(self) -> None:
         super().__init__()
 
-        self.counter: int = 0
-
         self.async_tasks: List[asyncio.Task] = []
 
     def build(self):
@@ -98,12 +96,6 @@ class TemplateApp(App):
             await asyncio.sleep(1.0)
 
             dashboard.update_values()
-
-            # increment the counter using internal libs and update the gui
-            self.counter = ops.add(self.counter, 1)
-            self.root.ids.counter_label.text = (
-                f"{'Tic' if self.counter % 2 == 0 else 'Tac'}: {self.counter}"
-            )
 
 
 if __name__ == "__main__":
