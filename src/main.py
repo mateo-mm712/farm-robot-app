@@ -87,7 +87,7 @@ class TemplateApp(App):
 
     async def template_function(self) -> None:
         """Placeholder forever loop."""
-        while self.root is None:
+        while not self.root or "dashboard" not in self.root.ids:
             await asyncio.sleep(0.01)
 
         dashboard = self.root.ids.dashboard
