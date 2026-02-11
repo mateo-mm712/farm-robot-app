@@ -43,7 +43,7 @@ class Dashboard(BoxLayout):
     def activate_actuator(self):
         print("Linear actuator activated")
 
-    def update_values(self, dt):
+    def update_values(self):
         self.temp_val = random.randint(0, 100)
         self.moisture_val = random.randint(0, 100)
         self.n_val = random.randint(0, 100)
@@ -66,7 +66,8 @@ class TemplateApp(App):
         self.async_tasks: List[asyncio.Task] = []
 
     def build(self):
-        return Builder.load_file("res/main.kv")
+        kv_path = os.path.join(os.path.dirname(__file__), "res", "main.kv")
+        return Builder.load_file(kv_path)
 
     def on_exit_btn(self) -> None:
         """Kills the running kivy application."""
@@ -87,15 +88,14 @@ class TemplateApp(App):
 
     async def template_function(self) -> None:
         """Placeholder forever loop."""
-        while not self.root or "dashboard" not in self.root.ids:
+        while not self.root:
             await asyncio.sleep(0.01)
-
-        dashboard = self.root.ids.dashboard
 
         while True:
             await asyncio.sleep(1.0)
 
-            dashboard.update_values()
+            if "dashboard" in self.root.ids:
+                self.root.ids.dashboard.update_values()
 
 
 if __name__ == "__main__":
