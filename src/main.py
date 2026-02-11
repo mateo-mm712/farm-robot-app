@@ -24,6 +24,37 @@ Config.set("kivy", "keyboard_mode", "systemanddock")
 # kivy imports
 from kivy.app import App  # noqa: E402
 from kivy.lang.builder import Builder  # noqa: E402
+from kivy.uix.boxlayout import BoxLayout
+from kivy.properties import NumericProperty
+import random
+
+class Dashboard(BoxLayout):
+    temp_val = NumericProperty(0)
+    moisture_val = NumericProperty(0)
+    n_val = NumericProperty(0)
+    p_val = NumericProperty(0)
+    k_val = NumericProperty(0)
+    salinity_val = NumericProperty(0)
+    ec_val = NumericProperty(0)
+    ph_val = NumericProperty(0)
+
+    battery = NumericProperty(100)
+
+    def activate_actuator(self):
+        print("Linear actuator activated")
+
+    def update_values(self, dt):
+        self.temp_val = random.randint(0, 100)
+        self.moisture_val = random.randint(0, 100)
+        self.n_val = random.randint(0, 100)
+        self.p_val = random.randint(0, 100)
+        self.k_val = random.randint(0, 100)
+        self.salinity_val = random.randint(0, 100)
+        self.ec_val = random.randint(0, 100)
+        self.ph_val = random.randint(0, 100)
+
+        self.battery = random.randint(50, 100)
+
 
 
 class TemplateApp(App):
@@ -61,8 +92,12 @@ class TemplateApp(App):
         while self.root is None:
             await asyncio.sleep(0.01)
 
+        dashboard = self.root.ids.dashboard
+
         while True:
             await asyncio.sleep(1.0)
+
+            dashboard.update_values()
 
             # increment the counter using internal libs and update the gui
             self.counter = ops.add(self.counter, 1)

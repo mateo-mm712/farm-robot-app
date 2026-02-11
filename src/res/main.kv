@@ -1,16 +1,125 @@
-RelativeLayout:
-    Button:
-        id: back_btn_layout
-        pos_hint: {"x": 0.0, "top": 1.0}
-        background_color: 0, 0, 0, 0
-        size_hint: 0.1, 0.1
-        background_normal: "assets/back_button.png"
-        on_release: app.on_exit_btn()
-        Image:
-            source: "assets/back_button_normal.png" if self.parent.state == "normal" else "assets/back_button_down.png"
-            pos: self.parent.pos
-            size: self.parent.size
+<Dashboard>:
+    orientation: "vertical"
+    padding: 10
+    spacing: 10
+
+    # ================= TOP BAR =================
+    BoxLayout:
+        size_hint_y: 0.1
+        spacing: 10
+
+        Button:
+            text: "EXIT"
+            size_hint_x: 0.15
+            background_color: (0.8, 0.1, 0.1, 1)
+            on_press: app.on_exit_btn()
+
+        Label:
+            text: "SOIL MONITOR DASHBOARD"
+            font_size: "24sp"
+            bold: True
+
+        Label:
+            text: "Battery: {}%".format(root.battery)
+            size_hint_x: 0.2
+
+    # ================= VALUE GRID =================
+    GridLayout:
+        cols: 4
+        spacing: 10
+        size_hint_y: 0.7
+
+        # Temperature
+        BoxLayout:
+            orientation: "vertical"
+            Label:
+                text: "Temp"
+            Label:
+                text: str(root.temp_val)
+                font_size: "28sp"
+
+        # Moisture
+        BoxLayout:
+            orientation: "vertical"
+            Label:
+                text: "Moisture"
+            Label:
+                text: str(root.moisture_val)
+                font_size: "28sp"
+
+        # Nitrogen
+        BoxLayout:
+            orientation: "vertical"
+            Label:
+                text: "Nitrogen"
+            Label:
+                text: str(root.n_val)
+                font_size: "28sp"
+
+        # Phosphorus
+        BoxLayout:
+            orientation: "vertical"
+            Label:
+                text: "Phosphorus"
+            Label:
+                text: str(root.p_val)
+                font_size: "28sp"
+
+        # Potassium
+        BoxLayout:
+            orientation: "vertical"
+            Label:
+                text: "Potassium"
+            Label:
+                text: str(root.k_val)
+                font_size: "28sp"
+
+        # Salinity
+        BoxLayout:
+            orientation: "vertical"
+            Label:
+                text: "Salinity"
+            Label:
+                text: str(root.salinity_val)
+                font_size: "28sp"
+
+        # EC
+        BoxLayout:
+            orientation: "vertical"
+            Label:
+                text: "EC"
+            Label:
+                text: str(root.ec_val)
+                font_size: "28sp"
+
+        # pH
+        BoxLayout:
+            orientation: "vertical"
+            Label:
+                text: "pH"
+            Label:
+                text: str(root.ph_val)
+                font_size: "28sp"
+
+    # ================= ACTUATOR BUTTON =================
+    BoxLayout:
+        size_hint_y: 0.15
+
+        Button:
+            text: "ACTIVATE LINEAR ACTUATOR"
+            font_size: "20sp"
+            background_color: (0.1, 0.6, 0.2, 1)
+            on_press: root.activate_actuator()
+
     Label:
         id: counter_label
         text: "Tic: 0"
-        font_size: 40
+        size_hint_y: 0.05
+
+
+# Root layout
+BoxLayout:
+    orientation: "vertical"
+
+    Dashboard:
+        id: dashboard
