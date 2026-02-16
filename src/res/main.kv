@@ -27,80 +27,161 @@
     # ================= VALUE GRID =================
     GridLayout:
         cols: 4
-        spacing: 10
+        spacing: 0
         size_hint_y: 0.7
+        padding: 0
 
         # Temperature
         BoxLayout:
             orientation: "vertical"
+            padding: 10
+            spacing: 5
+            canvas:
+                Color:
+                    rgba: (0.2, 0.2, 0.2, 1)
+                Line:
+                    rectangle: (self.x, self.y, self.width, self.height)
+                    width: 2
             Label:
                 text: "Temperature"
+                size_hint_y: 0.4
             Label:
                 text: str(root.temp_val)
                 font_size: "28sp"
+                size_hint_y: 0.6
 
         # Moisture
         BoxLayout:
             orientation: "vertical"
+            padding: 10
+            spacing: 5
+            canvas:
+                Color:
+                    rgba: (0.2, 0.2, 0.2, 1)
+                Line:
+                    rectangle: (self.x, self.y, self.width, self.height)
+                    width: 2
             Label:
                 text: "Moisture"
+                size_hint_y: 0.4
             Label:
                 text: str(root.moisture_val)
                 font_size: "28sp"
+                size_hint_y: 0.6
 
         # Nitrogen
         BoxLayout:
             orientation: "vertical"
+            padding: 10
+            spacing: 5
+            canvas:
+                Color:
+                    rgba: (0.2, 0.2, 0.2, 1)
+                Line:
+                    rectangle: (self.x, self.y, self.width, self.height)
+                    width: 2
             Label:
                 text: "Nitrogen"
+                size_hint_y: 0.4
             Label:
                 text: str(root.n_val)
                 font_size: "28sp"
+                size_hint_y: 0.6
 
         # Phosphorus
         BoxLayout:
             orientation: "vertical"
+            padding: 10
+            spacing: 5
+            canvas:
+                Color:
+                    rgba: (0.2, 0.2, 0.2, 1)
+                Line:
+                    rectangle: (self.x, self.y, self.width, self.height)
+                    width: 2
             Label:
                 text: "Phosphorus"
+                size_hint_y: 0.4
             Label:
                 text: str(root.p_val)
                 font_size: "28sp"
+                size_hint_y: 0.6
 
         # Potassium
         BoxLayout:
             orientation: "vertical"
+            padding: 10
+            spacing: 5
+            canvas:
+                Color:
+                    rgba: (0.2, 0.2, 0.2, 1)
+                Line:
+                    rectangle: (self.x, self.y, self.width, self.height)
+                    width: 2
             Label:
                 text: "Potassium"
+                size_hint_y: 0.4
             Label:
                 text: str(root.k_val)
                 font_size: "28sp"
+                size_hint_y: 0.6
 
         # Salinity
         BoxLayout:
             orientation: "vertical"
+            padding: 10
+            spacing: 5
+            canvas:
+                Color:
+                    rgba: (0.2, 0.2, 0.2, 1)
+                Line:
+                    rectangle: (self.x, self.y, self.width, self.height)
+                    width: 2
             Label:
                 text: "Salinity"
+                size_hint_y: 0.4
             Label:
                 text: str(root.salinity_val)
                 font_size: "28sp"
+                size_hint_y: 0.6
 
         # EC
         BoxLayout:
             orientation: "vertical"
+            padding: 10
+            spacing: 5
+            canvas:
+                Color:
+                    rgba: (0.2, 0.2, 0.2, 1)
+                Line:
+                    rectangle: (self.x, self.y, self.width, self.height)
+                    width: 2
             Label:
                 text: "EC"
+                size_hint_y: 0.4
             Label:
                 text: str(root.ec_val)
                 font_size: "28sp"
+                size_hint_y: 0.6
 
         # pH
         BoxLayout:
             orientation: "vertical"
+            padding: 10
+            spacing: 5
+            canvas:
+                Color:
+                    rgba: (0.2, 0.2, 0.2, 1)
+                Line:
+                    rectangle: (self.x, self.y, self.width, self.height)
+                    width: 2
             Label:
                 text: "pH"
+                size_hint_y: 0.4
             Label:
                 text: str(root.ph_val)
                 font_size: "28sp"
+                size_hint_y: 0.6
 
     # ================= ACTUATOR BUTTON =================
     BoxLayout:
