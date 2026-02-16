@@ -22,6 +22,7 @@
         Label:
             text: "Battery: {}%".format(root.battery)
             size_hint_x: 0.2
+            color: (1,0,0,1) if root.battery < 30 else (1,1,0,1) if root.battery < 60 else (0,1,0,1)
 
     # ================= VALUE GRID =================
     GridLayout:
@@ -33,7 +34,7 @@
         BoxLayout:
             orientation: "vertical"
             Label:
-                text: "Temp"
+                text: "Temperature"
             Label:
                 text: str(root.temp_val)
                 font_size: "28sp"
@@ -106,9 +107,9 @@
         size_hint_y: 0.15
 
         Button:
-            text: "ACTIVATE LINEAR ACTUATOR"
+            text: "ACTUATOR: ON" if root.actuator_on else "ACTUATOR: OFF"
             font_size: "20sp"
-            background_color: (0.1, 0.6, 0.2, 1)
+            background_color: (0.1, 0.7, 0.2, 1) if root.actuator_on else (0.3, 0.3, 0.3, 1)
             on_press: root.activate_actuator()
 
 

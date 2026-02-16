@@ -26,6 +26,7 @@ from kivy.app import App  # noqa: E402
 from kivy.lang.builder import Builder  # noqa: E402
 from kivy.uix.boxlayout import BoxLayout
 from kivy.properties import NumericProperty
+from kivy.properties import BooleanProperty
 import random
 
 class Dashboard(BoxLayout):
@@ -40,8 +41,11 @@ class Dashboard(BoxLayout):
 
     battery = NumericProperty(100)
 
+    actuator_on = BooleanProperty(False)
+
     def activate_actuator(self):
-        print("Linear actuator activated")
+        self.actuator_on = not self.actuator_on
+        print("ACTUANTOR ON" if self.actuator_on else "ACTUATOR OFF")
 
     def update_values(self):
         self.temp_val = random.randint(0, 100)
