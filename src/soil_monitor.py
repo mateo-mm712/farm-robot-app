@@ -8,7 +8,7 @@ The Kivy GUI should import and use these components.
 import sys
 import os
 
-# Add project root to path
+# Add current directory to path for local imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from hardware.relay import RelayController
