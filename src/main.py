@@ -95,7 +95,7 @@ class TemplateApp(App):
 
         return await asyncio.gather(run_wrapper(), *self.async_tasks)
 
-    async def template_function(self) -> None:
+    async def template_function(self):
         while not self.root:
             await asyncio.sleep(0.01)
             
@@ -105,21 +105,29 @@ class TemplateApp(App):
         while True:
             await asyncio.sleep(5.0)  # adjust measurement interval
             
+            try:
             # Run blocking sensor call in background thread
-            data = await loop.run_in_executor(None, self.soil_app.take_measurement)
+                data = await loop.run_in_executor(None, self.soil_app.take_measurement)
 
-            if data:
-                dashboard.temp_val = data.get("temperature", 0)
-                dashboard.moisture_val = data.get("moisture", 0)
-                dashboard.n_val = data.get("nitrogen", 0)
-                dashboard.p_val = data.get("phosphorus", 0)
-                dashboard.k_val = data.get("potassium", 0)
-                dashboard.salinity_val = data.get("salinity", 0)
-                dashboard.ec_val = data.get("ec", 0)
-                dashboard.ph_val = data.get("ph", 0)
-                dashboard.battery = data.get("battery", 0)
+                if data:
+                    dashboard.temp_val = data.get("temperature", 0)
+                    dashboard.moisture_val = data.get("moisture", 0)
+                    dashboard.n_val = data.get("nitrogen", 0)
+                    dashboard.p_val = data.get("phosphorus", 0)
+                    dashboard.k_val = data.get("potassium", 0)
+                    dashboard.salinity_val = data.get("salinity", 0)
+                    dashboard.ec_val = data.get("ec", 0)
+                    dashboard.ph_val = data.get("ph", 0)
+                    dashboard.battery = data.get("battery", 0)
 
-                print("Measurement Updated")
+                    print("Measurement Updated")
+
+            except Exception as e:
+                print(f"Measurement error: {e}")
+    
+    def on_stop(self):
+        print("Stopping application...")
+        self.soil_app.cleanup()
 
 
 if __name__ == "__main__":
