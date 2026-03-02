@@ -48,14 +48,14 @@ class Dashboard(BoxLayout):
         print("ACTUANTOR ON" if self.actuator_on else "ACTUATOR OFF")
 
     def update_values(self):
-        self.temp_val = random.randint(0, 100)
-        self.moisture_val = random.randint(0, 100)
-        self.n_val = random.randint(0, 100)
-        self.p_val = random.randint(0, 100)
-        self.k_val = random.randint(0, 100)
-        self.salinity_val = random.randint(0, 100)
-        self.ec_val = random.randint(0, 100)
-        self.ph_val = random.randint(0, 100)
+        #self.temp_val = random.randint(0, 100)
+        #self.moisture_val = random.randint(0, 100)
+        #self.n_val = random.randint(0, 100)
+        #self.p_val = random.randint(0, 100)
+        #self.k_val = random.randint(0, 100)
+        #self.salinity_val = random.randint(0, 100)
+        #self.ec_val = random.randint(0, 100)
+        #self.ph_val = random.randint(0, 100)
 
         self.battery = random.randint(50, 100)
 
@@ -68,9 +68,14 @@ class TemplateApp(App):
         super().__init__()
 
         self.async_tasks: List[asyncio.Task] = []
+        self.soil_app = get_app()
 
     def build(self):
         kv_path = os.path.join(os.path.dirname(__file__), "res", "main.kv")
+
+        if not self.soil_app.initialize():
+            print("Hardware initialized failed")
+
         return Builder.load_file(kv_path)
 
     def on_exit_btn(self) -> None:
@@ -91,15 +96,30 @@ class TemplateApp(App):
         return await asyncio.gather(run_wrapper(), *self.async_tasks)
 
     async def template_function(self) -> None:
-        """Placeholder forever loop."""
         while not self.root:
             await asyncio.sleep(0.01)
-
+            
+        dashboard = self.root.ids.dashboard
+        loop = asyncio.get_running_loop()
+        
         while True:
-            await asyncio.sleep(1.0)
+            await asyncio.sleep(5.0)  # adjust measurement interval
+            
+            # Run blocking sensor call in background thread
+            data = await loop.run_in_executor(None, self.soil_app.take_measurement)
 
-            if "dashboard" in self.root.ids:
-                self.root.ids.dashboard.update_values()
+            if data:
+                dashboard.temp_val = data.get("temperature", 0)
+                dashboard.moisture_val = data.get("moisture", 0)
+                dashboard.n_val = data.get("nitrogen", 0)
+                dashboard.p_val = data.get("phosphorus", 0)
+                dashboard.k_val = data.get("potassium", 0)
+                dashboard.salinity_val = data.get("salinity", 0)
+                dashboard.ec_val = data.get("ec", 0)
+                dashboard.ph_val = data.get("ph", 0)
+                dashboard.battery = data.get("battery", 0)
+
+                print("Measurement Updated")
 
 
 if __name__ == "__main__":
