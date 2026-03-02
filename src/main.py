@@ -27,7 +27,7 @@ from kivy.lang.builder import Builder  # noqa: E402
 from kivy.uix.boxlayout import BoxLayout
 from kivy.properties import NumericProperty
 from kivy.properties import BooleanProperty
-import random
+from soil_monitor import get_app
 
 class Dashboard(BoxLayout):
     temp_val = NumericProperty(0)
@@ -47,7 +47,7 @@ class Dashboard(BoxLayout):
         self.actuator_on = not self.actuator_on
         print("ACTUANTOR ON" if self.actuator_on else "ACTUATOR OFF")
 
-    def update_values(self):
+    #def update_values(self):
         #self.temp_val = random.randint(0, 100)
         #self.moisture_val = random.randint(0, 100)
         #self.n_val = random.randint(0, 100)
@@ -57,7 +57,7 @@ class Dashboard(BoxLayout):
         #self.ec_val = random.randint(0, 100)
         #self.ph_val = random.randint(0, 100)
 
-        self.battery = random.randint(50, 100)
+        #self.battery = random.randint(50, 100)
 
 
 
