@@ -119,15 +119,15 @@ class TemplateApp(App):
                 data = await loop.run_in_executor(None, self.soil_app.take_measurement)
 
                 if data:
-                    dashboard.temp_val = data.get("temperature", 0)
-                    dashboard.moisture_val = data.get("moisture", 0)
+                    dashboard.temp_val = data.get("temperature_c", data.get("temperature", 0))
+                    dashboard.moisture_val = data.get("moisture_pct", data.get("moisture", 0))
                     dashboard.n_val = data.get("nitrogen", 0)
                     dashboard.p_val = data.get("phosphorus", 0)
                     dashboard.k_val = data.get("potassium", 0)
                     dashboard.salinity_val = data.get("salinity", 0)
                     dashboard.ec_val = data.get("ec", 0)
                     dashboard.ph_val = data.get("ph", 0)
-                    dashboard.battery = data.get("battery", 0)
+                    dashboard.battery = data.get("battery", 95)
 
                     print("Measurement Updated")
 
@@ -160,15 +160,17 @@ class TemplateApp(App):
     @mainthread
     def _apply_measurement(self, data):
         dashboard = self.root.ids.dashboard
-        dashboard.temp_val = data.get("temperature", 0)
-        dashboard.moisture_val = data.get("moisture", 0)
+        # Map sensor data fields to dashboard properties
+        # Sensor returns: temperature_c, temperature_f, moisture_pct, ec, ph, nitrogen, phosphorus, potassium, salinity
+        dashboard.temp_val = data.get("temperature_c", data.get("temperature", 0))
+        dashboard.moisture_val = data.get("moisture_pct", data.get("moisture", 0))
         dashboard.n_val = data.get("nitrogen", 0)
         dashboard.p_val = data.get("phosphorus", 0)
         dashboard.k_val = data.get("potassium", 0)
         dashboard.salinity_val = data.get("salinity", 0)
         dashboard.ec_val = data.get("ec", 0)
         dashboard.ph_val = data.get("ph", 0)
-        dashboard.battery = data.get("battery", 0)
+        dashboard.battery = data.get("battery", 95)
         print("Measurement Updated")
 
 

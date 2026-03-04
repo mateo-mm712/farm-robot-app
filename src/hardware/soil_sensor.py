@@ -1,139 +1,91 @@
 """Soil sensor driver for multi-parameter soil measurements."""
 
-import serial
-import struct
-from typing import Optional, Dict, Any
+from pymodbus.client.serial import ModbusSerialClient
 
 
 class SoilSensor:
-    """Reads soil sensor data via Modbus RTU protocol."""
-
-    def __init__(self, port: str, baudrate: int = 9600, slave_id: int = 1):
+    """USB Soil sensor using Modbus RTU protocol."""
+    
+    def __init__(self, port, baudrate, slave_id):
         """
         Initialize the soil sensor.
-
+        
         Args:
-            port: Serial port name (e.g., '/dev/ttyUSB0')
-            baudrate: Baud rate for serial communication
-            slave_id: Modbus slave ID of the sensor
+            port: Serial port for the USB sensor (e.g., /dev/ttyUSB1)
+            baudrate: Baud rate for serial communication (default: 9600)
+            slave_id: Modbus slave ID for the sensor (default: 1)
         """
         self.port = port
         self.baudrate = baudrate
         self.slave_id = slave_id
-        self.serial: Optional[serial.Serial] = None
+        self.client = ModbusSerialClient(
+            method="rtu",
+            port=port,
+            baudrate=baudrate,
+            parity="N",
+            stopbits=1,
+            bytesize=8,
+            timeout=1
+        )
         self.connected = False
 
     def connect(self):
-        """Establish connection to soil sensor."""
+        """Establish connection to the sensor."""
         try:
-            self.serial = serial.Serial(
-                port=self.port,
-                baudrate=self.baudrate,
-                timeout=1.0,
-                parity=serial.PARITY_NONE,
-                stopbits=serial.STOPBITS_ONE,
-                bytesize=serial.EIGHTBITS
-            )
-            self.connected = True
-            print(f"Soil sensor connected on {self.port}")
-        except serial.SerialException as e:
-            print(f"Failed to connect to soil sensor: {e}")
-            self.connected = False
-
-    def _read_registers(self, start_addr: int, count: int) -> Optional[bytes]:
-        """
-        Read holding registers from sensor using Modbus RTU.
-
-        Args:
-            start_addr: Starting register address
-            count: Number of registers to read
-
-        Returns:
-            Raw register data or None if read failed
-        """
-        if not self.serial or not self.connected:
-            print("Sensor not connected")
-            return None
-
-        try:
-            # Modbus RTU: [SlaveID][FunctionCode][StartAddr_H][StartAddr_L][Count_H][Count_L][CRC_L][CRC_H]
-            request = bytes([
-                self.slave_id,
-                0x03,  # Read holding registers function code
-                (start_addr >> 8) & 0xFF,
-                start_addr & 0xFF,
-                (count >> 8) & 0xFF,
-                count & 0xFF
-            ])
-
-            # Calculate and append CRC16
-            crc = self._calculate_crc16(request)
-            request += struct.pack('<H', crc)
-
-            self.serial.write(request)
-            response = self.serial.read(2 + count * 2 + 2)  # Expected response length
-
-            if len(response) >= 7:
-                return response[3:-2]  # Extract data, skip header and CRC
-
+            self.connected = self.client.connect()
+            if self.connected:
+                print(f"Soil sensor connected on {self.port}")
+            else:
+                print(f"Failed to connect to soil sensor on {self.port}")
+            return self.connected
         except Exception as e:
-            print(f"Error reading registers: {e}")
+            print(f"Connection error: {e}")
+            return False
 
-        return None
-
-    @staticmethod
-    def _calculate_crc16(data: bytes) -> int:
-        """Calculate CRC16 checksum for Modbus."""
-        crc = 0xFFFF
-        for byte in data:
-            crc ^= byte
-            for _ in range(8):
-                if crc & 1:
-                    crc = (crc >> 1) ^ 0xA001
-                else:
-                    crc >>= 1
-        return crc
-
-    def read_data(self) -> Optional[Dict[str, Any]]:
+    def read(self):
         """
-        Read all soil sensor parameters.
-
+        Read soil data from the sensor.
+        
         Returns:
-            Dictionary with sensor readings or None if read failed
+            Dictionary containing sensor readings, or None if read fails
         """
         if not self.connected:
-            print("Sensor not connected")
-            return None
-
+            raise RuntimeError("Soil sensor not connected")
+            
         try:
-            # Read 8 registers (16 bytes) from address 0x00
-            data = self._read_registers(0x00, 8)
+            result = self.client.read_holding_registers(
+                address=0,
+                count=8,
+                slave=self.slave_id
+            )
 
-            if data and len(data) >= 16:
-                # Unpack sensor values (assuming 16-bit unsigned integers from sensor)
-                values = struct.unpack('>8H', data)
+            if result.isError():
+                raise RuntimeError("Soil sensor read failed")
 
-                return {
-                    "temperature": values[0] / 100.0,  # Celsius
-                    "moisture": values[1] / 10.0,      # % volumetric water content
-                    "ec": values[2] / 100.0,           # mS/cm conductivity
-                    "ph": values[3] / 100.0,           # pH
-                    "nitrogen": values[4],              # mg/kg
-                    "phosphorus": values[5],            # mg/kg
-                    "potassium": values[6],             # mg/kg
-                    "salinity": values[7] / 100.0       # ppt
-                }
-            else:
-                print("Invalid sensor response")
-                return None
+            r = result.registers
 
+            return {
+                "temperature_f": r[0] / 10.0 * 9.0 / 5.0 + 32.0,
+                "temperature_c": r[0] / 10.0,
+                "moisture_pct": r[1] / 10.0,
+                "ec": r[2],
+                "ph": r[3] / 10.0,
+                "nitrogen": r[4],
+                "phosphorus": r[5],
+                "potassium": r[6],
+                "salinity": r[7],
+            }
         except Exception as e:
-            print(f"Error reading sensor data: {e}")
+            print(f"Error reading sensor: {e}")
             return None
+
+    def read_data(self):
+        """Alias for read() to maintain compatibility."""
+        return self.read()
 
     def disconnect(self):
-        """Close connection to soil sensor."""
-        if self.serial and self.serial.is_open:
-            self.serial.close()
+        """Close the connection to the sensor."""
+        if self.client:
+            self.client.close()
             self.connected = False
             print("Soil sensor disconnected")
