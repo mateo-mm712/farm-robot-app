@@ -1,18 +1,40 @@
-"""Template test module."""
-import pytest
-from amiga_package import __version__
-from amiga_package import ops
+from pymodbus.client.serial import ModbusSerialClient
 
-# import the internal libs and test
+class SoilSensor:
+    def __init__(self, port, baudrate, slave_id):
+        self.slave_id = slave_id
+        self.client = ModbusSerialClient(
+            method="rtu",
+            port=port,
+            baudrate=baudrate,
+            parity="N",
+            stopbits=1,
+            bytesize=8,
+            timeout=1
+        )
 
+    def connect(self):
+        return self.client.connect()
 
-class TestDummy:
-    """Template test class."""
+    def read(self):
+        result = self.client.read_holding_registers(
+            address=0,
+            count=8,
+            slave=self.slave_id
+        )
 
-    def test_smoke(self) -> None:
-        assert __version__ == "0.0.1"
+        if result.isError():
+            raise RuntimeError("Soil sensor read failed")
 
-    @pytest.mark.parametrize("a,b,c", [(1, 2, 3), (2, 3, 5)])
-    def test_add(self, a, b, c) -> None:
-        expected = ops.add(a, b)
-        assert expected == c
+        r = result.registers
+
+        return {
+            "temperature_c": r[0] / 10.0* 9.0 / 5.0 + 32.0,
+            "moisture_pct": r[1] / 10.0,
+            "ec": r[2],
+            "ph": r[3] / 10.0,
+            "nitrogen": r[4],
+            "phosphorus": r[5],
+            "potassium": r[6],
+            "salinity": r[7],
+        }
