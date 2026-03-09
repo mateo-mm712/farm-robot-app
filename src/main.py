@@ -2,11 +2,15 @@
 import argparse
 import asyncio
 import os
+import sys
 from typing import List
 
 from amiga_package import ops
 
 # import internal libs
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from soil_monitor import get_app
 
 # Must come before kivy imports
 os.environ["KIVY_NO_ARGS"] = "1"
@@ -27,7 +31,7 @@ from kivy.lang.builder import Builder  # noqa: E402
 from kivy.uix.boxlayout import BoxLayout
 from kivy.properties import NumericProperty
 from kivy.properties import BooleanProperty
-from soil_monitor import get_app
+from kivy.clock import Clock, mainthread
 
 class Dashboard(BoxLayout):
     temp_val = NumericProperty(0)
@@ -49,7 +53,6 @@ class Dashboard(BoxLayout):
         # Set actuator as active
         self.actuator_on = True
         # Dispatch the measurement using Kivy's Clock to ensure it's on the main thread
-        from kivy.clock import Clock
         Clock.schedule_once(lambda dt: self._trigger_measurement(), 0)
 
     def _trigger_measurement(self):
@@ -174,7 +177,6 @@ class TemplateApp(App):
         if self.root:
             self.root.ids.dashboard.actuator_on = False
 
-    from kivy.clock import mainthread
     @mainthread
     def _apply_measurement(self, data):
         dashboard = self.root.ids.dashboard
