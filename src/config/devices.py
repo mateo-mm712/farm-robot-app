@@ -30,8 +30,8 @@ RELAY_BAUD = 9600            # Baud rate
 # FALLBACK PORTS (if auto-detection fails)
 # ============================================================================
 # These are used if the devices cannot be found by VID/PID
-RELAY_PORT_FALLBACK = "/dev/ttyUSB0"
-SENSOR_PORT_FALLBACK = "/dev/ttyUSB1"
+RELAY_PORT_FALLBACK = "/dev/ttyUSB1"
+SENSOR_PORT_FALLBACK = "/dev/ttyUSB2"
 
 # ============================================================================
 # PROBE CONFIGURATION
@@ -55,13 +55,36 @@ def find_device_by_vid_pid(vid, pid):
     """
     try:
         ports = serial.tools.list_ports.comports()
-        for port in ports:
-            if port.vid == vid and port.pid == pid:
-                print(f"Found device (VID: 0x{vid:04X}, PID: 0x{pid:04X}) at {port.device}")
-                return port.device
+        print(f"\n=== USB DEVICE DETECTION ===")
+        print(f"Looking for: VID=0x{vid:04X}, PID=0x{pid:04X}")
+        print(f"Total ports found: {len(ports)}\n")
+        
+        for i, port in enumerate(ports, 1):
+            print(f"Port {i}: {port.device}")
+            print(f"  Description: {port.description}")
+            print(f"  port.vid type: {type(port.vid).__name__} = {repr(port.vid)}")
+            print(f"  port.pid type: {type(port.pid).__name__} = {repr(port.pid)}")
+            
+            # Check if VID/PID are available
+            if port.vid is not None and port.pid is not None:
+                port_vid = int(port.vid) if not isinstance(port.vid, int) else port.vid
+                port_pid = int(port.pid) if not isinstance(port.pid, int) else port.pid
+                print(f"  Converted: VID=0x{port_vid:04X}, PID=0x{port_pid:04X}")
+                print(f"  Match check: {port_vid} == {vid} AND {port_pid} == {pid} = {port_vid == vid and port_pid == pid}")
+                
+                if port_vid == vid and port_pid == pid:
+                    print(f"  ✓✓✓ MATCH FOUND!\n")
+                    return port.device
+            else:
+                print(f"  ✗ VID/PID not available (None)")
+            print()
+                
     except Exception as e:
-        print(f"Error detecting USB devices: {e}")
+        print(f"\n✗ Error detecting USB devices: {e}")
+        import traceback
+        traceback.print_exc()
     
+    print(f"✗ Device not found (VID=0x{vid:04X}, PID=0x{pid:04X})\n")
     return None
 
 

@@ -49,16 +49,10 @@ class Dashboard(BoxLayout):
 
     def activate_actuator(self):
         """Trigger the full measurement sequence: extend actuator, measure, retract."""
-        print("Starting measurement sequence...")
-        # Set actuator as active
-        self.actuator_on = True
-        # Dispatch the measurement using Kivy's Clock to ensure it's on the main thread
-        Clock.schedule_once(lambda dt: self._trigger_measurement(), 0)
-
-    def _trigger_measurement(self):
-        """Trigger the async measurement from the main thread."""
-        loop = asyncio.get_event_loop()
-        asyncio.ensure_future(self._do_measurement(loop))
+        # Get the app instance
+        app = App.get_running_app()
+        # Call the app's measurement method
+        app.trigger_measurement(self)
 
     #def update_values(self):
         #self.temp_val = random.randint(0, 100)
@@ -150,6 +144,25 @@ class TemplateApp(App):
         print("Stopping application...")
         self.soil_app.cleanup()
 
+    def trigger_measurement(self, dashboard):
+        """Trigger measurement from the dashboard button press."""
+        # Set actuator as active on the dashboard
+        dashboard.actuator_on = True
+        # Dispatch the measurement using Kivy's Clock to ensure it's on the main thread
+        Clock.schedule_once(lambda dt: self._start_measurement(dashboard), 0)
+
+    def _start_measurement(self, dashboard):
+        """Start the async measurement from the main thread."""
+        try:
+            loop = asyncio.get_event_loop()
+            asyncio.ensure_future(self._do_measurement(loop, dashboard))
+        except Exception as e:
+            print(f"Error starting measurement: {e}")
+            import traceback
+            traceback.print_exc()
+            # Reset actuator state on error
+            dashboard.actuator_on = False
+
     # --------------------------------------------------
     # new helpers for the clock-based updater
     # --------------------------------------------------
@@ -158,18 +171,28 @@ class TemplateApp(App):
         # dispatch the blocking I/O to a thread pool so the UI stays
         # responsive.
         loop = asyncio.get_event_loop()
-        asyncio.ensure_future(self._do_measurement(loop))
+        asyncio.ensure_future(self._do_measurement(loop, None))
 
-    async def _do_measurement(self, loop):
-        data = await loop.run_in_executor(None, self.soil_app.take_measurement)
-        if not data or not self.root:
-            # Reset actuator state if measurement failed
-            if self.root:
-                self._reset_actuator_state()
-            return
-        # update widget properties on main thread (already there, but use
-        # mainthread decorator for clarity)
-        self._apply_measurement(data)
+    async def _do_measurement(self, loop, dashboard=None):
+        # Use provided dashboard or get it from root
+        if dashboard is None:
+            dashboard = self.root.ids.dashboard if self.root else None
+        try:
+            data = await loop.run_in_executor(None, self.soil_app.take_measurement)
+            if not data or not self.root:
+                # Reset actuator state if measurement failed
+                if dashboard:
+                    dashboard.actuator_on = False
+                return
+            # update widget properties on main thread
+            self._apply_measurement(data, dashboard)
+        except Exception as e:
+            print(f"Measurement error: {e}")
+            import traceback
+            traceback.print_exc()
+            # Reset actuator state on error
+            if dashboard:
+                dashboard.actuator_on = False
 
     @mainthread
     def _reset_actuator_state(self):
@@ -178,10 +201,10 @@ class TemplateApp(App):
             self.root.ids.dashboard.actuator_on = False
 
     @mainthread
-    def _apply_measurement(self, data):
-        dashboard = self.root.ids.dashboard
+    def _apply_measurement(self, data, dashboard=None):
+        if dashboard is None:
+            dashboard = self.root.ids.dashboard
         # Map sensor data fields to dashboard properties
-        # Sensor returns: temperature_c, temperature_f, moisture_pct, ec, ph, nitrogen, phosphorus, potassium, salinity
         dashboard.temp_val = data.get("temperature_c", data.get("temperature", 0))
         dashboard.moisture_val = data.get("moisture_pct", data.get("moisture", 0))
         dashboard.n_val = data.get("nitrogen", 0)
@@ -193,7 +216,7 @@ class TemplateApp(App):
         dashboard.battery = data.get("battery", 95)
         # Reset actuator state after measurement
         dashboard.actuator_on = False
-        print("Measurement Updated")
+        print("Measurement complete")
 
 
 if __name__ == "__main__":

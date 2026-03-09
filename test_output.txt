@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "test_detection.py", line 6, in <module>
+    from config.devices import find_device_by_vid_pid, SENSOR_VID, SENSOR_PID, RELAY_VID, RELAY_PID
+  File "/mnt/managed_home/farm-ng-user-mateomm2004/farm-robot-app/src/config/devices.py", line 9, in <module>
+    import serial
+ModuleNotFoundError: No module named 'serial'

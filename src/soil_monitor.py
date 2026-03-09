@@ -38,40 +38,54 @@ class SoilMonitorApp:
         Initialize all hardware components.
         
         Returns:
-            bool: True if successful, False otherwise
+            bool: True if GUI can load, False only for critical errors
         """
         try:
             print("Initializing Soil Monitoring System...")
             
-            # Get the correct port for relay (auto-detects by VID/PID)
-            print("Detecting relay...")
-            relay_port = get_relay_port()
-            print(f"Connecting to relay on {relay_port}...")
-            self.relay = RelayController(port=relay_port, baudrate=RELAY_BAUD)
+            # Try to initialize relay
+            relay_ok = False
+            try:
+                print("Detecting relay...")
+                relay_port = get_relay_port()
+                print(f"Connecting to relay on {relay_port}...")
+                self.relay = RelayController(port=relay_port, baudrate=RELAY_BAUD)
+                relay_ok = True
+            except Exception as e:
+                print(f"WARNING: Failed to connect to relay: {e}")
             
-            # Get the correct port for soil sensor (auto-detects by VID/PID)
-            print("Detecting soil sensor...")
-            sensor_port = get_sensor_port()
-            print(f"Connecting to soil sensor on {sensor_port}...")
-            self.soil_sensor = SoilSensor(
-                port=sensor_port,
-                baudrate=SENSOR_BAUD,
-                slave_id=SENSOR_SLAVE_ID
-            )
-            self.soil_sensor.connect()
+            # Try to initialize soil sensor
+            sensor_ok = False
+            try:
+                print("Detecting soil sensor...")
+                sensor_port = get_sensor_port()
+                print(f"Connecting to soil sensor on {sensor_port}...")
+                self.soil_sensor = SoilSensor(
+                    port=sensor_port,
+                    baudrate=SENSOR_BAUD,
+                    slave_id=SENSOR_SLAVE_ID
+                )
+                self.soil_sensor.connect()
+                sensor_ok = True
+            except Exception as e:
+                print(f"WARNING: Failed to connect to soil sensor: {e}")
             
-            # Initialize probe controller
-            self.controller = ProbeController(self.soil_sensor, self.relay)
+            # Only initialize controller if we have both devices
+            if relay_ok and sensor_ok:
+                self.controller = ProbeController(self.soil_sensor, self.relay)
+                print("Probe controller initialized")
+            else:
+                print("WARNING: Operating in GUI-only mode (missing hardware)")
             
             # Initialize data logger
             self.data_logger = DataLogger()
             
             self._initialized = True
-            print("System initialized successfully!")
+            print("System initialized!")
             return True
             
         except Exception as e:
-            print(f"Initialization failed: {e}")
+            print(f"Fatal initialization error: {e}")
             self.cleanup()
             return False
     
@@ -84,6 +98,10 @@ class SoilMonitorApp:
         """
         if not self._initialized:
             print("System not initialized")
+            return None
+        
+        if not self.controller:
+            print("WARNING: Hardware not connected, cannot take measurement")
             return None
         
         try:
