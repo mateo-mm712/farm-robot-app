@@ -48,7 +48,12 @@ class Dashboard(BoxLayout):
         print("Starting measurement sequence...")
         # Set actuator as active
         self.actuator_on = True
-        # Dispatch the measurement to avoid blocking the UI
+        # Dispatch the measurement using Kivy's Clock to ensure it's on the main thread
+        from kivy.clock import Clock
+        Clock.schedule_once(lambda dt: self._trigger_measurement(), 0)
+
+    def _trigger_measurement(self):
+        """Trigger the async measurement from the main thread."""
         loop = asyncio.get_event_loop()
         asyncio.ensure_future(self._do_measurement(loop))
 
@@ -196,9 +201,5 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    loop = asyncio.get_event_loop()
-    try:
-        loop.run_until_complete(TemplateApp().app_func())
-    except asyncio.CancelledError:
-        pass
-    loop.close()
+    # Use Kivy's normal run() method instead of async boilerplate
+    TemplateApp().run()
