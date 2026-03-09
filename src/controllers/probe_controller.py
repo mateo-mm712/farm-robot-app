@@ -20,7 +20,7 @@ class ProbeController:
         self.state = "IDLE"
         self.emergency_stop = False
 
-        self.extension_time = 30  # seconds (tuned for full actuator extension)
+        self.extension_time = 35  # seconds (tuned for full actuator extension)
 
     def trigger_estop(self):
         """Trigger emergency stop."""

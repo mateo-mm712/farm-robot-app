@@ -44,8 +44,13 @@ class Dashboard(BoxLayout):
     actuator_on = BooleanProperty(False)
 
     def activate_actuator(self):
-        self.actuator_on = not self.actuator_on
-        print("ACTUANTOR ON" if self.actuator_on else "ACTUATOR OFF")
+        """Trigger the full measurement sequence: extend actuator, measure, retract."""
+        print("Starting measurement sequence...")
+        # Set actuator as active
+        self.actuator_on = True
+        # Dispatch the measurement to avoid blocking the UI
+        loop = asyncio.get_event_loop()
+        asyncio.ensure_future(self._do_measurement(loop))
 
     #def update_values(self):
         #self.temp_val = random.randint(0, 100)
@@ -78,8 +83,7 @@ class TemplateApp(App):
 
         # schedule periodic measurements using Kivy's clock so that
         # property updates happen on the main thread
-        from kivy.clock import Clock
-        Clock.schedule_interval(self._schedule_measurement, 5.0)
+        # Clock.schedule_interval(self._schedule_measurement, 5.0)  # Disabled for manual triggering
 
         return Builder.load_file(kv_path)
 
@@ -111,7 +115,7 @@ class TemplateApp(App):
         dashboard = self.root.ids.dashboard
         loop = asyncio.get_running_loop()
 
-        while True:
+        if  self.actuator_on: 
             await asyncio.sleep(5.0)  # adjust measurement interval
 
             try:
@@ -119,7 +123,7 @@ class TemplateApp(App):
                 data = await loop.run_in_executor(None, self.soil_app.take_measurement)
 
                 if data:
-                    dashboard.temp_val = data.get("temperature_c", data.get("temperature", 0))
+                    dashboard.temp_val = data.get("temperature_f", data.get("temperature", 0))
                     dashboard.moisture_val = data.get("moisture_pct", data.get("moisture", 0))
                     dashboard.n_val = data.get("nitrogen", 0)
                     dashboard.p_val = data.get("phosphorus", 0)
@@ -151,10 +155,19 @@ class TemplateApp(App):
     async def _do_measurement(self, loop):
         data = await loop.run_in_executor(None, self.soil_app.take_measurement)
         if not data or not self.root:
+            # Reset actuator state if measurement failed
+            if self.root:
+                self._reset_actuator_state()
             return
         # update widget properties on main thread (already there, but use
         # mainthread decorator for clarity)
         self._apply_measurement(data)
+
+    @mainthread
+    def _reset_actuator_state(self):
+        """Reset actuator state on main thread."""
+        if self.root:
+            self.root.ids.dashboard.actuator_on = False
 
     from kivy.clock import mainthread
     @mainthread
@@ -171,6 +184,8 @@ class TemplateApp(App):
         dashboard.ec_val = data.get("ec", 0)
         dashboard.ph_val = data.get("ph", 0)
         dashboard.battery = data.get("battery", 95)
+        # Reset actuator state after measurement
+        dashboard.actuator_on = False
         print("Measurement Updated")
 
 
