@@ -18,9 +18,18 @@ class SoilSensor:
         self.port = port
         self.baudrate = baudrate
         self.slave_id = slave_id
+        # pymodbus 3.x changed the constructor signature
+        # `method` parameter has been replaced by `framer`.  The
+        # default framer for serial communication is RTU, which
+        # matches the old behavior.
+        #
+        # The signature now looks like:
+        # ModbusSerialClient(port, *, framer=FramerType.RTU, baudrate=..., ...)
+        # so we pass the port positionally and specify other options
+        # by name.
         self.client = ModbusSerialClient(
-            method="rtu",
-            port=port,
+            port,
+            framer="rtu",
             baudrate=baudrate,
             parity="N",
             stopbits=1,
