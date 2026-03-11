@@ -107,15 +107,20 @@ class SoilMonitorApp:
         
         if not self.controller:
             print("WARNING: Hardware not connected, cannot take measurement")
+            print(f"  relay: {self.relay}, sensor: {self.soil_sensor}")
             return None
         
         try:
+            print("Starting measurement sequence (this will take ~35 seconds)...")
             data = self.controller.take_measurement()
+            print(f"Measurement complete, data: {data}")
             if data and self.data_logger:
                 self.data_logger.log(data)
             return data
         except Exception as e:
             print(f"Measurement failed: {e}")
+            import traceback
+            traceback.print_exc()
             return None
     
     def get_status(self):

@@ -1,8 +1,8 @@
 # Copyright (c) farm-ng, inc. Amiga Development Kit License, Version 0.1
 import argparse
-import asyncio
 import os
 import sys
+import threading
 from typing import List
 
 from amiga_package import ops
@@ -73,8 +73,6 @@ class TemplateApp(App):
 
     def __init__(self) -> None:
         super().__init__()
-
-        self.async_tasks: List[asyncio.Task] = []
         self.soil_app = get_app()
 
     def build(self):
@@ -92,53 +90,6 @@ class TemplateApp(App):
     def on_exit_btn(self) -> None:
         """Kills the running kivy application."""
         App.get_running_app().stop()
-
-    # the async/app_func boilerplate is no longer required; we can use
-    # Kivy's normal run() and let the clock handle scheduling.  Keep the
-    # method around in case someone still wants to start the app via
-    # asyncio, but it isn't needed for simple GUI updates.
-
-    async def app_func(self):
-        async def run_wrapper() -> None:
-            await self.async_run(async_lib="asyncio")
-            for task in self.async_tasks:
-                task.cancel()
-
-        # keep existing behaviour as a fallback, but don't create any
-        # periodic task here since the clock is doing it now
-        return await run_wrapper()
-
-    # this coroutine is no longer used for periodic updates; the clock
-    # callbacks manage the work. leave it for backwards compatibility.
-    async def template_function(self):
-        while not self.root:
-            await asyncio.sleep(0.01)
-
-        dashboard = self.root.ids.dashboard
-        loop = asyncio.get_running_loop()
-
-        if  self.actuator_on: 
-            await asyncio.sleep(5.0)  # adjust measurement interval
-
-            try:
-                # Run blocking sensor call in background thread
-                data = await loop.run_in_executor(None, self.soil_app.take_measurement)
-
-                if data:
-                    dashboard.temp_val = data.get("temperature_f", data.get("temperature", 0))
-                    dashboard.moisture_val = data.get("moisture_pct", data.get("moisture", 0))
-                    dashboard.n_val = data.get("nitrogen", 0)
-                    dashboard.p_val = data.get("phosphorus", 0)
-                    dashboard.k_val = data.get("potassium", 0)
-                    dashboard.salinity_val = data.get("salinity", 0)
-                    dashboard.ec_val = data.get("ec", 0)
-                    dashboard.ph_val = data.get("ph", 0)
-                    dashboard.battery = data.get("battery", 95)
-
-                    print("Measurement Updated")
-
-            except Exception as e:
-                print(f"Measurement error: {e}")
     
     def on_stop(self):
         print("Stopping application...")
@@ -146,62 +97,39 @@ class TemplateApp(App):
 
     def trigger_measurement(self, dashboard):
         """Trigger measurement from the dashboard button press."""
+        print("[BUTTON] Button pressed, triggering measurement...")
         # Set actuator as active on the dashboard
         dashboard.actuator_on = True
-        # Dispatch the measurement using Kivy's Clock to ensure it's on the main thread
-        Clock.schedule_once(lambda dt: self._start_measurement(dashboard), 0)
+        # Run measurement in background thread to avoid blocking UI
+        thread = threading.Thread(target=self._do_measurement_thread, args=(dashboard,))
+        thread.daemon = True
+        thread.start()
 
-    def _start_measurement(self, dashboard):
-        """Start the async measurement from the main thread."""
+    def _do_measurement_thread(self, dashboard):
+        """Run measurement in background thread."""
+        print("[MEASUREMENT] Starting measurement in background thread...")
         try:
-            loop = asyncio.get_event_loop()
-            asyncio.ensure_future(self._do_measurement(loop, dashboard))
+            data = self.soil_app.take_measurement()
+            print(f"[MEASUREMENT] Got data: {data}")
+            if data:
+                # Apply measurement to UI from main thread
+                self._apply_measurement(data, dashboard)
+            else:
+                print("[MEASUREMENT] No data returned, resetting actuator")
+                Clock.schedule_once(lambda dt: self._reset_actuator(dashboard), 0)
         except Exception as e:
-            print(f"Error starting measurement: {e}")
+            print(f"[MEASUREMENT] Measurement error: {e}")
             import traceback
             traceback.print_exc()
-            # Reset actuator state on error
-            dashboard.actuator_on = False
+            Clock.schedule_once(lambda dt: self._reset_actuator(dashboard), 0)
 
-    # --------------------------------------------------
-    # new helpers for the clock-based updater
-    # --------------------------------------------------
-    def _schedule_measurement(self, dt: float) -> None:
-        """Called by Kivy's Clock on the main thread every ``dt`` seconds."""
-        # dispatch the blocking I/O to a thread pool so the UI stays
-        # responsive.
-        loop = asyncio.get_event_loop()
-        asyncio.ensure_future(self._do_measurement(loop, None))
-
-    async def _do_measurement(self, loop, dashboard=None):
-        # Use provided dashboard or get it from root
-        if dashboard is None:
-            dashboard = self.root.ids.dashboard if self.root else None
-        try:
-            data = await loop.run_in_executor(None, self.soil_app.take_measurement)
-            if not data or not self.root:
-                # Reset actuator state if measurement failed
-                if dashboard:
-                    dashboard.actuator_on = False
-                return
-            # update widget properties on main thread
-            self._apply_measurement(data, dashboard)
-        except Exception as e:
-            print(f"Measurement error: {e}")
-            import traceback
-            traceback.print_exc()
-            # Reset actuator state on error
-            if dashboard:
-                dashboard.actuator_on = False
-
-    @mainthread
-    def _reset_actuator_state(self):
+    def _reset_actuator(self, dashboard):
         """Reset actuator state on main thread."""
-        if self.root:
-            self.root.ids.dashboard.actuator_on = False
+        dashboard.actuator_on = False
 
     @mainthread
     def _apply_measurement(self, data, dashboard=None):
+        print(f"[MEASUREMENT] _apply_measurement called with data: {data}")
         if dashboard is None:
             dashboard = self.root.ids.dashboard
         # Map sensor data fields to dashboard properties
@@ -216,7 +144,7 @@ class TemplateApp(App):
         dashboard.battery = data.get("battery", 95)
         # Reset actuator state after measurement
         dashboard.actuator_on = False
-        print("Measurement complete")
+        print("Measurement complete - values updated and actuator reset")
 
 
 if __name__ == "__main__":
