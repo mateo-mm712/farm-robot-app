@@ -65,8 +65,13 @@ class SoilMonitorApp:
                     baudrate=SENSOR_BAUD,
                     slave_id=SENSOR_SLAVE_ID
                 )
-                self.soil_sensor.connect()
-                sensor_ok = True
+                connected = self.soil_sensor.connect()
+                if connected:
+                    sensor_ok = True
+                else:
+                    # raise to trigger the outer exception handler so we log
+                    # the failure consistently
+                    raise RuntimeError(f"could not open sensor on {sensor_port}")
             except Exception as e:
                 print(f"WARNING: Failed to connect to soil sensor: {e}")
             
