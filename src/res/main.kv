@@ -14,6 +14,12 @@
             background_color: (0.8, 0.1, 0.1, 1)
             on_press: app.on_exit_btn()
 
+        Button:
+            text: "HISTORY"
+            size_hint_x: 0.15
+            background_color: (0.1, 0.4, 0.8, 1)
+            on_press: app.show_history()
+
         Label:
             text: "SOIL MONITOR DASHBOARD"
             font_size: "24sp"
@@ -203,9 +209,55 @@
             on_press: root.activate_actuator()
 
 
-# Root layout
-BoxLayout:
+<HistoryScreen>:
     orientation: "vertical"
 
-    Dashboard:
-        id: dashboard
+    BoxLayout:
+        size_hint_y: 0.1
+        spacing: 10
+
+        Button:
+            text: "BACK"
+            size_hint_x: 0.15
+            background_color: (0.8, 0.2, 0.2, 1)
+            on_press: app.show_dashboard()
+
+        Label:
+            text: "SOIL MEASUREMENT HISTORY"
+            font_size: "24sp"
+            bold: True
+
+        Label:
+            text: ""
+            size_hint_x: 0.15
+
+    ScrollView:
+        do_scroll_x: False
+
+        GridLayout:
+            id: history_list
+            cols: 1
+            size_hint_y: None
+            height: self.minimum_height
+            row_default_height: 30
+            row_force_default: True
+            padding: 10
+            spacing: 2
+
+
+# Root layout
+ScreenManager:
+    id: screen_manager
+
+    Screen:
+        name: "dashboard"
+
+        Dashboard:
+            id: dashboard
+
+    Screen:
+        name: "history"
+        on_enter: history_screen.load_history()
+
+        HistoryScreen:
+            id: history_screen

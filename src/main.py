@@ -29,6 +29,7 @@ Config.set("kivy", "keyboard_mode", "systemanddock")
 from kivy.app import App  # noqa: E402
 from kivy.lang.builder import Builder  # noqa: E402
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.label import Label
 from kivy.properties import NumericProperty
 from kivy.properties import BooleanProperty
 from kivy.clock import Clock, mainthread
@@ -86,6 +87,17 @@ class TemplateApp(App):
         # Clock.schedule_interval(self._schedule_measurement, 5.0)  # Disabled for manual triggering
 
         return Builder.load_file(kv_path)
+
+    def show_history(self) -> None:
+        """Switch to history screen and refresh entries."""
+        self.root.ids.screen_manager.current = "history"
+        history_screen = self.root.ids.history_screen
+        if hasattr(history_screen, 'load_history'):
+            history_screen.load_history()
+
+    def show_dashboard(self) -> None:
+        """Switch back to dashboard screen."""
+        self.root.ids.screen_manager.current = "dashboard"
 
     def on_exit_btn(self) -> None:
         """Kills the running kivy application."""
@@ -147,7 +159,42 @@ class TemplateApp(App):
         print("Measurement complete - values updated and actuator reset")
 
 
+class HistoryScreen(BoxLayout):
+    """Screen that shows historical logged soil measurements."""
+
+    def load_history(self):
+        app = App.get_running_app()
+        data_logger = app.soil_app.data_logger if hasattr(app, 'soil_app') else None
+        measurements = []
+        if data_logger:
+            measurements = data_logger.get_latest_measurements(20)
+
+        history_container = self.ids.history_list
+        history_container.clear_widgets()
+
+        if not measurements:
+            history_container.add_widget(Label(text="No historical measurements available.", size_hint_y=None, height=40))
+            return
+
+        # Show most recent first
+        for m in reversed(measurements):
+            display_text = (
+                f"{m.get('timestamp','')} | "
+                f"T={m.get('temperature','')} "
+                f"M={m.get('moisture','')} "
+                f"pH={m.get('ph','')} "
+                f"EC={m.get('ec','')} "
+                f"N={m.get('nitrogen','')} "
+                f"P={m.get('phosphorus','')} "
+                f"K={m.get('potassium','')} "
+                f"Sal={m.get('salinity','')} "
+                f"Bat={m.get('battery','')}"
+            )
+            history_container.add_widget(Label(text=display_text, size_hint_y=None, height=30, text_size=(self.width, None), halign='left', valign='middle'))
+
+
 if __name__ == "__main__":
+
     parser = argparse.ArgumentParser(prog="template-app")
 
     # Add additional command line arguments here
