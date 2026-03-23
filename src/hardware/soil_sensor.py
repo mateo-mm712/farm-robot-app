@@ -137,8 +137,7 @@ class SoilSensor:
             r = result.registers
 
             return {
-                "temperature_f": r[0] / 10.0 * 9.0 / 5.0 + 32.0,
-                "temperature_c": r[0] / 10.0,
+                "temperature_f": round(r[0] / 10.0 * 9.0 / 5.0 + 32.0, 1),
                 "moisture_pct": r[1] / 10.0,
                 "ec": r[2],
                 "ph": r[3] / 10.0,
