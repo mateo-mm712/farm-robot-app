@@ -133,7 +133,7 @@ class TemplateApp(App):
         if dashboard is None:
             dashboard = self.root.ids.dashboard
         # Map sensor data fields to dashboard properties
-        dashboard.temp_val = data.get("temperature_c", data.get("temperature", 0))
+        dashboard.temp_val = data.get("temperature_f", data.get("temperature", 0))
         dashboard.moisture_val = data.get("moisture_pct", data.get("moisture", 0))
         dashboard.n_val = data.get("nitrogen", 0)
         dashboard.p_val = data.get("phosphorus", 0)
