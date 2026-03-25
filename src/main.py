@@ -30,6 +30,7 @@ from kivy.app import App  # noqa: E402
 from kivy.lang.builder import Builder  # noqa: E402
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
+from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.properties import NumericProperty
 from kivy.properties import BooleanProperty
 from kivy.clock import Clock, mainthread
@@ -78,14 +79,13 @@ class TemplateApp(App):
 
     def build(self):
         kv_path = os.path.join(os.path.dirname(__file__), "res", "main.kv")
+        history_kv_path = os.path.join(os.path.dirname(__file__), "res", "history.kv")
 
         if not self.soil_app.initialize():
             print("Hardware initialized failed")
 
-        # schedule periodic measurements using Kivy's clock so that
-        # property updates happen on the main thread
-        # Clock.schedule_interval(self._schedule_measurement, 5.0)  # Disabled for manual triggering
-
+        # Load both KV files
+        Builder.load_file(history_kv_path)
         return Builder.load_file(kv_path)
 
     def show_history(self) -> None:

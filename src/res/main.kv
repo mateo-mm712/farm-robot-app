@@ -209,42 +209,6 @@
             on_press: root.activate_actuator()
 
 
-<HistoryScreen>:
-    orientation: "vertical"
-
-    BoxLayout:
-        size_hint_y: 0.1
-        spacing: 10
-
-        Button:
-            text: "BACK"
-            size_hint_x: 0.15
-            background_color: (0.8, 0.2, 0.2, 1)
-            on_press: app.show_dashboard()
-
-        Label:
-            text: "SOIL MEASUREMENT HISTORY"
-            font_size: "24sp"
-            bold: True
-
-        Label:
-            text: ""
-            size_hint_x: 0.15
-
-    ScrollView:
-        do_scroll_x: False
-
-        GridLayout:
-            id: history_list
-            cols: 1
-            size_hint_y: None
-            height: self.minimum_height
-            row_default_height: 30
-            row_force_default: True
-            padding: 10
-            spacing: 2
-
-
 # Root layout
 ScreenManager:
     id: screen_manager
